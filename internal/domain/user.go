@@ -15,16 +15,16 @@ type User struct {
 
 // RegistrationData — данные для регистрации (отдельная структура!)
 type RegistrationData struct {
-    Phone    string
-    Password string
-    Email    string
-    FullName string
+    Phone    string 
+    Password string 
+    Email    string 
+    FullName string 
 }
 
 // LoginData — данные для входа
 type LoginData struct {
-    Phone    string
-    Password string
+    Phone    string `json:"phone"`
+    Password string `json:"password"`
 }
 
 // UpdateData — данные для обновления

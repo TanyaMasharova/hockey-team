@@ -11,7 +11,7 @@ import (
 
 
 type Service struct {
-    userRepo interfaces.UserRepository
+    userRepo interfaces.UserRepository //интерфейсы - это тоже указатели (под капотом)
 }
 
 //конструктор
