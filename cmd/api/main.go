@@ -13,6 +13,7 @@ import (
 	"github.com/TanyaMasharova/hockey-team/internal/api/http/handlers"
 	"github.com/TanyaMasharova/hockey-team/internal/repository/postgres"
 	"github.com/TanyaMasharova/hockey-team/internal/service/auth"
+	"github.com/TanyaMasharova/hockey-team/internal/service/matches"
 	"github.com/TanyaMasharova/hockey-team/pkg/database"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -63,12 +64,15 @@ func main() {
 
     //5. Инициализация репозитория
     userRepo := postgres.NewUserRepository(db)
+    matchRepo := postgres.NewMatchRepository(db)
 
     //6. Инициализация сервиса
     authService := auth.NewService(userRepo)
-
+    matchService := matches.NewService(matchRepo)
     //7. Инициализация хэндлера
     userHandler := handlers.NewUserHandler(authService, logger)
+
+    matchesHandler := handlers.NewMatchesHandler(matchService, logger)
 
 
     //8. Настройка маршрутизаора gin
@@ -90,6 +94,7 @@ func main() {
     api := router.Group("/api")
     {
         api.POST("/register", userHandler.Register)
+        api.GET("/matches", matchesHandler.GetMatches)
     }
     //9. Настройка http-Сервера
     port := getEnv("HTTP_PORT", "8080")

@@ -10,7 +10,7 @@ import (
 	"github.com/lib/pq"
 )
 
-//указатель на подключение к БД. приватная структыра (т.к. начинается с маленькой буквы)
+//указатель на подключение к БД. приватная структура (т.к. начинается с маленькой буквы)
 type userRepo struct {
     db *sqlx.DB
 }
@@ -26,7 +26,7 @@ func (r *userRepo) Create(ctx context.Context, user *domain.User) error {
 		VALUES ($1, $2, $3, $4)
 		RETURNING id, created_at, updated_at
 	`
-	//QueryRowContext - запрос который ыернет не более 1 строки и использует context для отмены операций и установки таймаутов
+	//QueryRowContext - запрос который вернет не более 1 строки и использует context для отмены операций и установки таймаутов
 	//Ошибки, в том числе ошибки, когда строки не найдены, откладываются до вызова Scan-метода возвращаемого значения
 	err := r.db.QueryRowContext(ctx, query,
 	user.Phone,
