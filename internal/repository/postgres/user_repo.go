@@ -30,10 +30,11 @@ func (r *userRepo) Create(ctx context.Context, user *domain.User) error {
 	//Ошибки, в том числе ошибки, когда строки не найдены, откладываются до вызова Scan-метода возвращаемого значения
 	err := r.db.QueryRowContext(ctx, query,
 	user.Phone,
-user.PasswordHash,
- nullString(user.Email), 
+    user.PasswordHash,
+    nullString(user.Email), 
 	user.FullName,
 ).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
+//формирует запрос и результаты кладет в &user.ID, &user.CreatedAt, &user.UpdatedAt
 
 if err != nil {
         // Преобразуем ошибки БД в ошибки репозитория

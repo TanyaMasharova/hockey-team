@@ -4,7 +4,7 @@ import "time"
 
 // User — просто хранилище данных, никакой логики
 type User struct {
-    ID           int64     `db:"id" json:"id"`
+    ID           string     `db:"id" json:"id"`
     Phone        string    `db:"phone" json:"phone"`
     PasswordHash string    `db:"password_hash" json:"-"`
     Email        string    `db:"email" json:"email"`
@@ -23,8 +23,8 @@ type RegistrationData struct {
 
 // LoginData — данные для входа
 type LoginData struct {
-    Phone    string `json:"phone"`
-    Password string `json:"password"`
+    Phone    string
+    Password string
 }
 
 // UpdateData — данные для обновления

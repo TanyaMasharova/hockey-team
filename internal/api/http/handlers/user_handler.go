@@ -1,55 +1,55 @@
 package handlers
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 
 	"github.com/TanyaMasharova/hockey-team/internal/api/http/dto"
 	"github.com/TanyaMasharova/hockey-team/internal/domain"
 	"github.com/TanyaMasharova/hockey-team/internal/service/auth"
+	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 type UserHandler struct {
 	userService *auth.Service
+	logger *logrus.Logger
 }
 
-func NewUserHandler(authService *auth.Service) *UserHandler{
+func NewUserHandler(authService *auth.Service, logger *logrus.Logger) *UserHandler{
 	if authService == nil {
 		panic("userService is required")
 	}
 	return &UserHandler {
 		userService: authService,
+		logger: logger,
 	}
 }
 
 //r - указатель на запрос, содержит в себе заголовки, тело 
 //w - интерфейс, содержит в себе структуру для отправки ответа
-func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
-	//1. Проверка метода
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-	//2. Декодирование JSON
+func (h *UserHandler) Register(c *gin.Context) {
+
+	//1. Декодирование JSON
 	//явно создаём переменную, т.к. данные приходят извне
 	var req dto.RegisterRequest 
 	//NewDecoder() - конструктор, создает новый декодер
 	//Decode() - метод
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.WithError(err).Warn("Invalid request body")
+		c.JSON(http.StatusBadRequest, gin.H {
+			"error" : "Invalud request body: " + err.Error(),
+				})
+				return
 	}
-	defer r.Body.Close() //закрываем тело запроса явно
 
-	//3. Преобразование в доменную структуру
-	/*
-	var regData domain.RegistrationData        // 1. Только объявление
-regData := domain.RegistrationData{}       // 2. Объявление + пустая инициализация
-regData := domain.RegistrationData{        // 3. Объявление + заполнение
-    Phone: req.Phone,
-}
-		*/
+		// Логируем входящий запрос
+	h.logger.WithFields(logrus.Fields{
+		"phone":    req.Phone,
+		"email":    req.Email,
+		"fullName": req.FullName,
+	}).Info("Processing registration request")
+
 	regData := domain.RegistrationData{
 		Phone: req.Phone,
 		Password: req.Password,
@@ -57,19 +57,29 @@ regData := domain.RegistrationData{        // 3. Объявление + запо
 		FullName: req.FullName,
 	}
 
-	user, err := h.userService.Register(r.Context(), regData)
+	user, err := h.userService.Register(c.Request.Context(), regData)
 	if err != nil {
+
+		h.logger.WithError(err).Error("Registration failed")
+		
+		h.logger.Errorf("Error type: %T", err)
 		 switch {
         case errors.Is(err, auth.ErrPhoneAlreadyRegistered):
-            http.Error(w, "Phone number already registered", http.StatusConflict)
+           c.JSON(http.StatusConflict, gin.H{
+						"error" : "Phone number already registered",
+					 })
         case errors.Is(err, auth.ErrEmailAlreadyRegistered):
-            http.Error(w, "Email already registered", http.StatusConflict)
+            c.JSON(http.StatusConflict, gin.H{
+							"error" : "Email is already registered",
+						})
         case errors.Is(err, auth.ErrValidationFailed):
-            http.Error(w, err.Error(), http.StatusBadRequest)
+            c.JSON(http.StatusBadRequest, gin.H{
+							"error" : err.Error(),
+						})
         default:
-            // Логируем внутреннюю ошибку (в реальном проекте используйте логгер)
-            // log.Printf("Internal error: %v", err)
-            http.Error(w, "Internal server error", http.StatusInternalServerError)
+            c.JSON(http.StatusInternalServerError, gin.H{
+							"error" : "Internal server error",
+						})
         }
 				return
 	}
@@ -82,12 +92,7 @@ regData := domain.RegistrationData{        // 3. Объявление + запо
 		CreatedAt: user.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
 
-	//Header() устанавливает заголовок (в даннос случае говорящий про json)
-	//WriteHeader() устанавливает http статус-код 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(resp)
-
+	c.JSON(http.StatusCreated, resp)
 
 }
 

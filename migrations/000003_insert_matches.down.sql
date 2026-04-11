@@ -1,0 +1,1 @@
+DELETE FROM matches WHERE match_date >= '2025-02-01' AND match_date <= '2025-05-01';

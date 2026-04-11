@@ -10,7 +10,7 @@ type RegisterRequest struct {
 
 //ответ на фронт
 type RegisterResponse struct {
-    ID        int64  `json:"id"`
+    ID        string  `json:"id"`
     Phone     string `json:"phone"`
     Email     string `json:"email"`
     FullName  string `json:"full_name"`
