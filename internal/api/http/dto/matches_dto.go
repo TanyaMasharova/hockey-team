@@ -14,6 +14,7 @@ type MatchResponse struct {
     // Season         string    `json:"season"`
     Status         string    `json:"status"`
     IsDerby        bool      `json:"is_derby"`
+    WinType        string    `json:"win_type,omitempty"`
 }
 
 // ListMatchesResponse — ответ со списком матчей

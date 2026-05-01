@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/TanyaMasharova/hockey-team/internal/api/http/dto"
 	"github.com/TanyaMasharova/hockey-team/internal/service/matches"
@@ -27,7 +28,20 @@ func NewMatchesHandler(matchService *matches.Service, logger *logrus.Logger) *Ma
 }
 //gin.Context помогает отслеживатьс= состояние запросов и ответов (http)
 func (h *MatchesHandler) GetMatches(c *gin.Context){
-	matches, err := h.matchService.GetMatches(c.Request.Context())
+
+	limit, _ := strconv.Atoi(c.Query("limit"))
+	h.logger.Info(limit, " - limit")
+
+	futurePastStr := c.Query("futurePast")
+	 var futurePast *string
+    if futurePastStr != "" {
+        futurePast = &futurePastStr
+        h.logger.Info(futurePastStr, " - future / past")
+    } else {
+        h.logger.Info("nil", " - future / past")
+    }
+
+	matches, err := h.matchService.GetMatches(c.Request.Context(), &limit, futurePast)
 	if err != nil {
 				h.logger.WithError(err).Error("GetMatches failed")
 	}
@@ -45,6 +59,7 @@ func (h *MatchesHandler) GetMatches(c *gin.Context){
 			// Season:         match.Season,
 			Status:         match.Status,
 			IsDerby:        match.IsDerby,
+			WinType:				match.WinType,
 		})
 	}
 	c.JSON(http.StatusOK, resp)

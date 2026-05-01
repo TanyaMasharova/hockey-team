@@ -7,6 +7,7 @@ import (
 	"github.com/TanyaMasharova/hockey-team/internal/api/http/dto"
 	"github.com/TanyaMasharova/hockey-team/internal/domain"
 	"github.com/jmoiron/sqlx"
+	"github.com/sirupsen/logrus"
 )
 
 type matchRepo struct {
@@ -17,7 +18,7 @@ func NewMatchRepository(db *sqlx.DB) *matchRepo {
 	return &matchRepo{db: db}
 }
 
-func (r *matchRepo) GetMatches(ctx context.Context) ([]dto.MatchResponse, error) {
+func (r *matchRepo) GetMatches(ctx context.Context, limit *int, futurePast *string) ([]dto.MatchResponse, error) {
 	query := `
 		SELECT m.id, 
             o.name as opponent,
@@ -27,11 +28,27 @@ func (r *matchRepo) GetMatches(ctx context.Context) ([]dto.MatchResponse, error)
             m.our_score, 
             m.opponent_score, 
             m.status, 
-            m.is_derby
+            m.is_derby, 
+						m.win_type
 		FROM matches m
 		JOIN opponents o ON m.opponent_id = o.id
-		ORDER BY m.match_date DESC
+		WHERE 1=1
 	`
+	
+
+	if futurePast != nil && *futurePast != "" {
+		if *futurePast == "future" {
+			query += " AND DATE(m.match_date) >= CURRENT_DATE"
+			
+		} else if *futurePast == "past" {
+			query += " AND DATE(m.match_date) < CURRENT_DATE"
+		}
+	}
+logrus.Info(query)
+	if limit != nil {
+		query += fmt.Sprintf(" LIMIT %d", *limit)
+	}
+
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query matches: %w", err)
@@ -51,6 +68,7 @@ func (r *matchRepo) GetMatches(ctx context.Context) ([]dto.MatchResponse, error)
 			// &match.Season,
 			&match.Status,
 			&match.IsDerby,
+			&match.WinType,
 		)
 		if err != nil {
 			return nil, fmt.Errorf("failed to scan match: %w", err)

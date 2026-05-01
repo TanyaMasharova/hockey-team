@@ -14,5 +14,6 @@ type Match struct {
 	Season         string    `db:"season" json:"season"`
 	Status         string    `db:"status" json:"status"`
 	IsDerby        bool      `db:"is_derby" json:"is_derby"`
+	WinType        string    `db:"win_type" json:"win_type"`
 }
 

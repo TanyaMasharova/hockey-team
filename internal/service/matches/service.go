@@ -22,13 +22,25 @@ func NewService(matchRepo interfaces.MatchRepository) *Service {
     }
 }
 
-func (s *Service) GetMatches(ctx context.Context) ([]dto.MatchResponse, error) {
+func (s *Service) GetMatches(ctx context.Context, limit *int, futurePast *string) ([]dto.MatchResponse, error) {
 		
 	//создать переменную куда загружать ответ от репозитория
 	var matches []dto.MatchResponse
 
+	var limitValue *int
+    
+    // Проверяем, передан ли параметр limit
+    if limit != nil && *limit > 0 {
+        limitValue = limit
+    }
+
+		var futurePastValue *string
+    if futurePast != nil && *futurePast != "" {
+        futurePastValue = futurePast
+    }
+
 	//вызвать метод интерфейса репозитория
-	result, err := s.matchRepo.GetMatches(ctx)
+	result, err := s.matchRepo.GetMatches(ctx, limitValue, futurePastValue)
 	if err != nil {
 				return nil, fmt.Errorf("failed to get matches: %w", err)
 	}
