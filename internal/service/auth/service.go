@@ -9,6 +9,7 @@ import (
 
 	"github.com/TanyaMasharova/hockey-team/internal/domain"
 	"github.com/TanyaMasharova/hockey-team/internal/repository/interfaces"
+	"github.com/sirupsen/logrus"
 )
 
 
@@ -62,6 +63,7 @@ func (s *Service) Register(ctx context.Context, data domain.RegistrationData) (*
         PasswordHash: data.Password,
         Email:        data.Email,
         FullName:     data.FullName,
+         Role:      "user", 
     }
 
 		if err := s.userRepo.Create(ctx, user); err != nil {
@@ -100,6 +102,7 @@ func (s *Service) validatePassword(password string) error {
 type LoginResponseData struct {
     Token string
     User  *domain.User
+    Role      string
 }
 
 func (s *Service) Login(ctx context.Context, email, password string) (*LoginResponseData, error) {
@@ -130,10 +133,13 @@ func (s *Service) Login(ctx context.Context, email, password string) (*LoginResp
     if err != nil {
         return nil, fmt.Errorf("failed to generate token: %w", err)
     }
+    
+    logrus.Info("user role: ", user.Role)
 
     return &LoginResponseData{
         Token: token,
         User:  user,
+        Role:      user.Role,
     }, nil
 }
 // GetUserByID получает пользователя по ID (как строке)

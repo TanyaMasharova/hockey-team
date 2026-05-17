@@ -9,6 +9,7 @@ type UserResponse struct {
     Email     string     `json:"email"`
     FullName  string     `json:"full_name"`
     BirthDate *string    `json:"birth_date,omitempty"`
+    Role      string    `db:"role"`
     CreatedAt time.Time  `json:"created_at"`
     UpdatedAt time.Time  `json:"updated_at"`
 }

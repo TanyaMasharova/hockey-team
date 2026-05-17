@@ -12,6 +12,7 @@ import (
 
 	"github.com/TanyaMasharova/hockey-team/internal/api/http/handlers"
 	"github.com/TanyaMasharova/hockey-team/internal/repository/postgres"
+	"github.com/TanyaMasharova/hockey-team/internal/service/admin"
 	"github.com/TanyaMasharova/hockey-team/internal/service/auth"
 	"github.com/TanyaMasharova/hockey-team/internal/service/matches"
 	"github.com/TanyaMasharova/hockey-team/internal/service/seat"
@@ -71,6 +72,7 @@ func main() {
     ticketRepo := postgres.NewTicketRepository(db)
     sectorRepo := postgres.NewSectorRepository(db)
 seatRepo := postgres.NewSeatRepository(db)
+adminRepo := postgres.NewAdminRepository(db)
 
     //6. Инициализация сервиса
     authService := auth.NewService(userRepo)
@@ -78,6 +80,7 @@ seatRepo := postgres.NewSeatRepository(db)
     ticketService := ticket.NewService(ticketRepo)
     sectorService := sector.NewService(sectorRepo)
 seatService := seat.NewService(seatRepo)
+adminService := admin.NewService(adminRepo)
 
     
     //7. Инициализация хэндлера
@@ -86,6 +89,7 @@ seatService := seat.NewService(seatRepo)
     ticketHandler := handlers.NewTicketHandler(ticketService, logger)
     sectorHandler := handlers.NewSectorHandler(sectorService, logger)
 seatHandler := handlers.NewSeatHandler(seatService, logger)
+adminHandler := handlers.NewAdminHandler(adminService, logger)
 
 
     //8. Настройка маршрутизаора gin
@@ -119,6 +123,9 @@ api.POST("/tickets", ticketHandler.CreateTicket)
 
  api.GET("/stadium/sectors", sectorHandler.GetAllSectors)
     api.GET("/stadium/sectors/:sectorId/seats", seatHandler.GetSeatsBySector)
+
+    api.GET("/admin/stats-summary", adminHandler.GetStatsSummary)
+api.GET("/admin/stats", adminHandler.GetAllStats)
     }
     //9. Настройка http-Сервера
     port := getEnv("HTTP_PORT", "8080")

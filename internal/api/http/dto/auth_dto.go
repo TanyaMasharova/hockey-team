@@ -28,4 +28,5 @@ type LoginResponse struct {
     ID        string  `json:"id"`
 	Token     string `json:"access_token"`
 	TokenType string `json:"token_type"`
+    Role        string `json:"role"`
 }

@@ -141,7 +141,13 @@ func (h *UserHandler) Login(c *gin.Context) {
         ID:        loginData.User.ID,
         Token:     loginData.Token,
         TokenType: "Bearer",
+        Role:        loginData.User.Role,
+
     }
+    h.logger.WithFields(logrus.Fields{
+        "user_id": loginData.User.ID,
+        "role":    loginData.User.Role,
+    }).Info("Login successful, sending response")
 
     c.JSON(http.StatusOK, resp)
 }
@@ -187,6 +193,7 @@ func (h *UserHandler) GetUserByID(c *gin.Context) {
         Email:     user.Email,
         FullName:  user.FullName,
         BirthDate: user.BirthDate,
+        Role:      user.Role,
         CreatedAt: user.CreatedAt,
         UpdatedAt: user.UpdatedAt,
     }

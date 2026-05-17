@@ -9,6 +9,7 @@ type User struct {
     Email        string     `db:"email" json:"email"`
     FullName     string     `db:"full_name" json:"full_name"`
     BirthDate    *string    `db:"birth_date" json:"birth_date"` // добавляем дату рождения
+    Role      string    `db:"role" json:"role"`
     CreatedAt    time.Time  `db:"created_at" json:"created_at"`
     UpdatedAt    time.Time  `db:"updated_at" json:"updated_at"`
 }

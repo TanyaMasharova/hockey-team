@@ -83,7 +83,7 @@ func (r *userRepo) FindByEmail(ctx context.Context, email string) (*domain.User,
 	var user domain.User
 	
 	query := `
-		SELECT id, phone, email, password_hash, full_name, birth_date, created_at, updated_at
+		SELECT id, phone, email, password_hash, full_name, birth_date, role, created_at, updated_at
 		FROM users
 		WHERE email = $1
 	`
