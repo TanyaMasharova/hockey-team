@@ -48,3 +48,28 @@ func (s *Service) GetMatches(ctx context.Context, limit *int, futurePast *string
 	return  matches, nil
 	//если ошибка - прерывание и вывод ошибки
 }
+
+func (s *Service) GetStatsMatches(ctx context.Context) (*dto.MatchStatsResponse, error) {
+		
+	stats, err := s.matchRepo.GetMatchesStats(ctx)
+    if err != nil {
+        return nil, fmt.Errorf("failed to get matches stats: %w", err)
+    }
+
+    return stats, nil
+	
+}
+
+// GetMatchByID возвращает матч по ID
+func (s *Service) GetMatchByID(ctx context.Context, matchID string) (*dto.MatchResponse, error) {
+    if matchID == "" {
+        return nil, fmt.Errorf("match ID is required")
+    }
+    
+    match, err := s.matchRepo.GetMatchByID(ctx, matchID)
+    if err != nil {
+        return nil, fmt.Errorf("failed to get match: %w", err)
+    }
+    
+    return match, nil
+}

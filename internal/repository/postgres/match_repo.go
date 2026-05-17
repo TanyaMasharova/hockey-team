@@ -22,7 +22,7 @@ func (r *matchRepo) GetMatches(ctx context.Context, limit *int, futurePast *stri
 	query := `
 		SELECT m.id, 
             o.name as opponent,
-						o.logo_url as logo_opponent,
+						COALESCE(o.logo_url, '') as logo_opponent,
             m.match_date, 
             m.home_away, 
             m.our_score, 
@@ -85,10 +85,92 @@ logrus.Info(query)
 
 
 
-func (r *matchRepo) GetMatchByID(ctx context.Context, id string) (*domain.Match, error) {
-	return &domain.Match{}, nil
+func (r *matchRepo) GetMatchByID(ctx context.Context, id string) (*dto.MatchResponse, error) {
+	query := `
+		SELECT m.id, 
+			o.name as opponent,
+			COALESCE(o.logo_url, '') as logo_opponent,
+			m.match_date, 
+			m.home_away, 
+			m.our_score, 
+			m.opponent_score, 
+			m.status, 
+			m.is_derby, 
+			COALESCE(m.win_type, '') as win_type
+		FROM matches m
+		JOIN opponents o ON m.opponent_id = o.id
+		WHERE m.id = $1
+	`
+
+	var match dto.MatchResponse
+	err := r.db.GetContext(ctx, &match, query, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get match by id: %w", err)
+	}
+	
+	return &match, nil
 }
 
-func 	(r *matchRepo) GetMatchesBySeason(ctx context.Context, season string) ([]domain.Match, error) {
-	return []domain.Match{}, nil
+func 	(r *matchRepo) GetMatchesBySeason(ctx context.Context, season string) ([]dto.MatchResponse, error) {
+	return []dto.MatchResponse{}, nil
+}
+
+func (r *matchRepo) GetMatchesStats(ctx context.Context) (*dto.MatchStatsResponse, error) {
+	query := `
+		SELECT 
+    -- Победы
+    COUNT(CASE WHEN our_score > opponent_score AND win_type = 'regular' THEN 1 END) as wins_regular,
+    COUNT(CASE WHEN our_score > opponent_score AND win_type = 'overtime' THEN 1 END) as wins_overtime,
+    COUNT(CASE WHEN our_score > opponent_score AND win_type = 'penalty' THEN 1 END) as wins_penalty,
+    -- Поражения
+    COUNT(CASE WHEN our_score < opponent_score AND win_type = 'regular' THEN 1 END) as losses_regular,
+    COUNT(CASE WHEN our_score < opponent_score AND win_type = 'overtime' THEN 1 END) as losses_overtime,
+    COUNT(CASE WHEN our_score < opponent_score AND win_type = 'penalty' THEN 1 END) as losses_penalty
+		FROM matches 
+		WHERE status = 'finished';
+	`
+	var stats dto.MatchStatsResponse
+
+	err := r.db.QueryRowContext(ctx, query).Scan(
+		 &stats.Wins.Regular,
+        &stats.Wins.Overtime,
+        &stats.Wins.Penalty,
+        &stats.Losses.Regular,
+        &stats.Losses.Overtime,
+        &stats.Losses.Penalty,
+	)
+	if err != nil {
+        return nil, fmt.Errorf("failed to get match stats: %w", err)
+    }
+		stats.Total = stats.Wins.Regular + stats.Wins.Overtime + stats.Wins.Penalty + 
+                  stats.Losses.Regular + stats.Losses.Overtime + stats.Losses.Penalty
+		return &stats, nil
+
+}
+func (r *matchRepo) GetMatchWithOpponent(ctx context.Context, matchID string) (*domain.MatchWithOpponent, error) {
+    var match domain.MatchWithOpponent
+    
+    query := `
+        SELECT 
+            m.id as match_id,
+            o.name as opponent_name,
+            o.logo as opponent_logo,
+            m.match_date,
+            m.home_away,
+            m.our_score,
+            m.opponent_score,
+            m.status,
+            m.is_derby,
+            COALESCE(m.win_type, '') as win_type
+        FROM matches m
+        JOIN opponents o ON m.opponent_id = o.id
+        WHERE m.id = $1 AND m.deleted_at IS NULL
+    `
+    
+    err := r.db.GetContext(ctx, &match, query, matchID)
+    if err != nil {
+        return nil, fmt.Errorf("failed to get match with opponent: %w", err)
+    }
+    
+    return &match, nil
 }

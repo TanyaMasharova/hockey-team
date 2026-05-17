@@ -64,3 +64,42 @@ func (h *MatchesHandler) GetMatches(c *gin.Context){
 	}
 	c.JSON(http.StatusOK, resp)
 }
+
+func (h *MatchesHandler) GetStatsMatches(c *gin.Context){
+
+	matchesStats, err := h.matchService.GetStatsMatches(c.Request.Context())
+
+	if err != nil {
+				h.logger.WithError(err).Error("GetMatches failed")
+	}
+
+	c.JSON(http.StatusOK, matchesStats)
+}
+
+func (h *MatchesHandler) GetMatchByID(c *gin.Context) {
+    matchID := c.Param("id")
+    if matchID == "" {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "Match ID is required"})
+        return
+    }
+    
+    match, err := h.matchService.GetMatchByID(c.Request.Context(), matchID)
+    if err != nil {
+        h.logger.WithError(err).Error("Failed to get match")
+        c.JSON(http.StatusNotFound, gin.H{"error": "Match not found"})
+        return
+    }
+    
+    c.JSON(http.StatusOK, dto.MatchResponse{
+        ID:            match.ID,
+        Opponent:      match.Opponent,
+        LogoOpponent:  match.LogoOpponent,
+        MatchDate:     match.MatchDate,
+        HomeAway:      match.HomeAway,
+        OurScore:      match.OurScore,
+        OpponentScore: match.OpponentScore,
+        Status:        match.Status,
+        IsDerby:       match.IsDerby,
+        WinType:       match.WinType,
+    })
+}

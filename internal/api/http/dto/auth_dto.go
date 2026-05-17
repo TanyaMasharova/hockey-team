@@ -19,6 +19,13 @@ type RegisterResponse struct {
 
 //приходящие данные при входе
 type LoginRequest struct {
-    Phone    string `json:"phone" validate:"required"`
-    Password string `json:"password" validate:"required"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required"`
+}
+
+
+type LoginResponse struct {
+    ID        string  `json:"id"`
+	Token     string `json:"access_token"`
+	TokenType string `json:"token_type"`
 }

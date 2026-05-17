@@ -14,6 +14,9 @@ import (
 	"github.com/TanyaMasharova/hockey-team/internal/repository/postgres"
 	"github.com/TanyaMasharova/hockey-team/internal/service/auth"
 	"github.com/TanyaMasharova/hockey-team/internal/service/matches"
+	"github.com/TanyaMasharova/hockey-team/internal/service/seat"
+	"github.com/TanyaMasharova/hockey-team/internal/service/sector"
+	"github.com/TanyaMasharova/hockey-team/internal/service/ticket"
 	"github.com/TanyaMasharova/hockey-team/pkg/database"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -65,14 +68,24 @@ func main() {
     //5. Инициализация репозитория
     userRepo := postgres.NewUserRepository(db)
     matchRepo := postgres.NewMatchRepository(db)
+    ticketRepo := postgres.NewTicketRepository(db)
+    sectorRepo := postgres.NewSectorRepository(db)
+seatRepo := postgres.NewSeatRepository(db)
 
     //6. Инициализация сервиса
     authService := auth.NewService(userRepo)
     matchService := matches.NewService(matchRepo)
+    ticketService := ticket.NewService(ticketRepo)
+    sectorService := sector.NewService(sectorRepo)
+seatService := seat.NewService(seatRepo)
+
+    
     //7. Инициализация хэндлера
     userHandler := handlers.NewUserHandler(authService, logger)
-
     matchesHandler := handlers.NewMatchesHandler(matchService, logger)
+    ticketHandler := handlers.NewTicketHandler(ticketService, logger)
+    sectorHandler := handlers.NewSectorHandler(sectorService, logger)
+seatHandler := handlers.NewSeatHandler(seatService, logger)
 
 
     //8. Настройка маршрутизаора gin
@@ -94,7 +107,18 @@ func main() {
     api := router.Group("/api")
     {
         api.POST("/register", userHandler.Register)
+        api.POST("/login", userHandler.Login)
+        
         api.GET("/matches", matchesHandler.GetMatches)
+        api.GET("/matches/:id", matchesHandler.GetMatchByID)
+        api.GET("/matchesStats", matchesHandler.GetStatsMatches)
+        api.GET("/user/:id", userHandler.GetUserByID)
+        api.GET("/tickets/user/:user_id", ticketHandler.GetUserTickets)
+api.PATCH("/user/:user_id/profile/field", userHandler.UpdateField)
+api.POST("/tickets", ticketHandler.CreateTicket)
+
+ api.GET("/stadium/sectors", sectorHandler.GetAllSectors)
+    api.GET("/stadium/sectors/:sectorId/seats", seatHandler.GetSeatsBySector)
     }
     //9. Настройка http-Сервера
     port := getEnv("HTTP_PORT", "8080")

@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/TanyaMasharova/hockey-team/internal/domain"
 	"github.com/TanyaMasharova/hockey-team/internal/repository/interfaces"
@@ -93,4 +95,169 @@ func (s *Service) validatePhone(phone string) error {
 func (s *Service) validatePassword(password string) error {
 	//заглушка. проверка на кол-во символов в пароле, наличие спец. символов
 	return nil
+}
+
+type LoginResponseData struct {
+    Token string
+    User  *domain.User
+}
+
+func (s *Service) Login(ctx context.Context, email, password string) (*LoginResponseData, error) {
+    // 1. Валидация входных данных
+    if email == "" {
+        return nil, fmt.Errorf("%w: email is required", ErrValidationFailed)
+    }
+    if password == "" {
+        return nil, fmt.Errorf("%w: password is required", ErrValidationFailed)
+    }
+
+    // 2. Поиск пользователя по email
+    user, err := s.userRepo.FindByEmail(ctx, email)
+    if err != nil {
+        if errors.Is(err, interfaces.ErrUserNotFound) {
+            return nil, ErrUserNotFound
+        }
+        return nil, fmt.Errorf("database error: %w", err)
+    }
+
+    // 3. Проверка пароля
+    if user.PasswordHash != password {
+        return nil, ErrInvalidCredentials
+    }
+
+    // 4. Генерация токена
+    token, err := s.generateJWTToken(user)
+    if err != nil {
+        return nil, fmt.Errorf("failed to generate token: %w", err)
+    }
+
+    return &LoginResponseData{
+        Token: token,
+        User:  user,
+    }, nil
+}
+// GetUserByID получает пользователя по ID (как строке)
+func (s *Service) GetUserByID(ctx context.Context, id string) (*domain.User, error) {
+    if id == "" {
+        return nil, fmt.Errorf("%w: invalid user id", ErrValidationFailed)
+    }
+    
+    user, err := s.userRepo.FindByID(ctx, id)
+    if err != nil {
+        if errors.Is(err, interfaces.ErrUserNotFound) {
+            return nil, ErrUserNotFound
+        }
+        return nil, fmt.Errorf("failed to get user: %w", err)
+    }
+    
+    // Очищаем sensitive данные
+    user.PasswordHash = ""
+    
+    return user, nil
+}
+
+
+// Вспомогательный метод для генерации JWT токена (пока заглушка)
+func (s *Service) generateJWTToken(user *domain.User) (string, error) {
+	// TODO: Реализовать генерацию JWT токена
+	// Пока возвращаем временный токен для тестирования
+	// В реальном коде нужно использовать библиотеку github.com/golang-jwt/jwt
+	
+	// Это временное решение для тестирования
+	// tempToken := fmt.Sprintf("temp_token_for_user_%d", user.ID)
+	return user.ID, nil
+}
+
+// Добавьте эти методы в ваш auth сервис
+
+// UpdateProfile обновляет профиль пользователя
+func (s *Service) UpdateProfile(ctx context.Context, userID string, updateData domain.UpdateProfileData) (*domain.User, error) {
+    // 1. Получаем текущего пользователя
+    user, err := s.userRepo.FindByID(ctx, userID)
+    if err != nil {
+        if errors.Is(err, interfaces.ErrUserNotFound) {
+            return nil, ErrUserNotFound
+        }
+        return nil, fmt.Errorf("find user: %w", err)
+    }
+    
+    // 2. Обновляем только те поля, которые переданы
+    if updateData.FullName != nil {
+        user.FullName = *updateData.FullName
+    }
+    if updateData.Phone != nil {
+        user.Phone = *updateData.Phone
+    }
+    if updateData.Email != nil {
+        user.Email = *updateData.Email
+    }
+    if updateData.BirthDate != nil {
+        user.BirthDate = updateData.BirthDate
+    }
+    
+    // 3. Сохраняем изменения
+    err = s.userRepo.Update(ctx, user)
+    if err != nil {
+        if errors.Is(err, interfaces.ErrDuplicatePhone) {
+            return nil, ErrPhoneAlreadyRegistered
+        }
+        if errors.Is(err, interfaces.ErrDuplicateEmail) {
+            return nil, ErrEmailAlreadyRegistered
+        }
+        return nil, fmt.Errorf("update user: %w", err)
+    }
+    
+    return user, nil
+}
+
+// UpdateField обновляет конкретное поле пользователя
+func (s *Service) UpdateField(ctx context.Context, userID string, field string, value string) error {
+    // Валидация поля
+    switch field {
+    case "phone":
+        if value == "" {
+            return ErrValidationFailed
+        }
+        // Дополнительная валидация телефона
+        if len(value) < 10 {
+            return ErrValidationFailed
+        }
+    case "email":
+        if value == "" {
+            return ErrValidationFailed
+        }
+        // Простая валидация email
+        if !strings.Contains(value, "@") {
+            return ErrValidationFailed
+        }
+    case "full_name":
+        if value == "" {
+            return ErrValidationFailed
+        }
+    case "birth_date":
+        // Валидация даты рождения (опционально)
+        if value != "" {
+            if _, err := time.Parse("2006-01-02", value); err != nil {
+                return ErrValidationFailed
+            }
+        }
+    default:
+        return fmt.Errorf("unknown field: %s", field)
+    }
+    
+    err := s.userRepo.UpdateField(ctx, userID, field, value)
+    if err != nil {
+        if errors.Is(err, interfaces.ErrDuplicatePhone) {
+            return ErrPhoneAlreadyRegistered
+        }
+        if errors.Is(err, interfaces.ErrDuplicateEmail) {
+            return ErrEmailAlreadyRegistered
+        }
+        if errors.Is(err, interfaces.ErrUserNotFound) {
+            return ErrUserNotFound
+        }
+        return fmt.Errorf("update field: %w", err)
+    }
+    
+    return nil
 }
