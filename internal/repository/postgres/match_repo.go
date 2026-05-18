@@ -54,7 +54,7 @@ logrus.Info(query)
 		return nil, fmt.Errorf("failed to query matches: %w", err)
 	}
 	defer rows.Close() //гарантирует, что после выполнения всей функции GetMatches ресурсы будут освобождены
-	var matches []dto.MatchResponse
+	matches := make([]dto.MatchResponse, 0)
 	for rows.Next() { //цикл для каждой строки (для БД!)
 		var match dto.MatchResponse
 		err := rows.Scan(

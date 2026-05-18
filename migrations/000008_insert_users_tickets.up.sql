@@ -12,6 +12,35 @@ DECLARE
     i INTEGER;
     user_record RECORD;
 BEGIN
+    -- Базовые тестовые аккаунты для локальной проверки и обучения
+    IF NOT EXISTS (SELECT 1 FROM users WHERE email = 'user@example.com') THEN
+        INSERT INTO users (id, phone, email, full_name, password_hash, role, created_at, updated_at)
+        VALUES (
+            gen_random_uuid(),
+            '+79990000001',
+            'user@example.com',
+            'Test User',
+            'user123',
+            'user',
+            NOW(),
+            NOW()
+        );
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM users WHERE email = 'admin@example.com') THEN
+        INSERT INTO users (id, phone, email, full_name, password_hash, role, created_at, updated_at)
+        VALUES (
+            gen_random_uuid(),
+            '+79990000002',
+            'admin@example.com',
+            'Test Admin',
+            '12345',
+            'admin',
+            NOW(),
+            NOW()
+        );
+    END IF;
+
     -- Список новых пользователей
     FOR i IN 1..15 LOOP
         user_email := CONCAT('fan', i, '@example.com');
