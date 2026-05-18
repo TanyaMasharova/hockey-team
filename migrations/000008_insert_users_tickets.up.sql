@@ -17,7 +17,7 @@ BEGIN
         INSERT INTO users (id, phone, email, full_name, password_hash, role, created_at, updated_at)
         VALUES (
             gen_random_uuid(),
-            '+79990000001',
+            '+78880000001',
             'user@example.com',
             'Test User',
             'user123',
@@ -31,7 +31,7 @@ BEGIN
         INSERT INTO users (id, phone, email, full_name, password_hash, role, created_at, updated_at)
         VALUES (
             gen_random_uuid(),
-            '+79990000002',
+            '+78880000002',
             'admin@example.com',
             'Test Admin',
             '12345',
