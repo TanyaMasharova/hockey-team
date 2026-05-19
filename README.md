@@ -49,7 +49,7 @@ migrate -path ./migrations -database "postgres://user:pass@localhost:5432/hockey
 go run ./cmd/api
 ```
 
-To run the full stack (backend + frontend + database + proxy) use [hockey-infra](https://github.com/TanyaMasharova/hockey-infra).
+To run the full stack (backend + frontend + database + proxy) use `hockey-infra`.
 
 ## API
 
