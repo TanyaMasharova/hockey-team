@@ -11,15 +11,15 @@ import (
 )
 
 type adminRepo struct {
-    db *sqlx.DB
+	db *sqlx.DB
 }
 
 func NewAdminRepository(db *sqlx.DB) *adminRepo {
-    return &adminRepo{db: db}
+	return &adminRepo{db: db}
 }
 
 func (r *adminRepo) GetSalesByMonth(ctx context.Context) ([]domain.SalesByMonth, error) {
-    query := `
+	query := `
         SELECT 
             TO_CHAR(m.match_date, 'YYYY-MM') as month,
             COUNT(t.id) as tickets,
@@ -31,20 +31,20 @@ func (r *adminRepo) GetSalesByMonth(ctx context.Context) ([]domain.SalesByMonth,
         ORDER BY month DESC
         LIMIT 12
     `
-    
-    var result []domain.SalesByMonth
-    err := r.db.SelectContext(ctx, &result, query)
-    if err != nil {
-        return nil, fmt.Errorf("failed to get sales by month: %w", err)
-    }
-    
-    // Добавьте лог для проверки
-    logrus.Infof("Sales by month result: %+v", result)
-    
-    return result, nil
+
+	var result []domain.SalesByMonth
+	err := r.db.SelectContext(ctx, &result, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get sales by month: %w", err)
+	}
+
+	// Добавьте лог для проверки
+	logrus.Infof("Sales by month result: %+v", result)
+
+	return result, nil
 }
 func (r *adminRepo) GetSectorPopularity(ctx context.Context) ([]domain.SectorPopularity, error) {
-    query := `
+	query := `
         SELECT 
             ss.sector_number as sector,
             COUNT(t.id) as sold,
@@ -56,34 +56,34 @@ func (r *adminRepo) GetSectorPopularity(ctx context.Context) ([]domain.SectorPop
         GROUP BY ss.sector_number, ss.capacity
         ORDER BY sold DESC
     `
-    
-    var result []domain.SectorPopularity
-    err := r.db.SelectContext(ctx, &result, query)
-    if err != nil {
-        return nil, fmt.Errorf("failed to get sector popularity: %w", err)
-    }
-    return result, nil
+
+	var result []domain.SectorPopularity
+	err := r.db.SelectContext(ctx, &result, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get sector popularity: %w", err)
+	}
+	return result, nil
 }
 
 func (r *adminRepo) GetTicketStatus(ctx context.Context) ([]domain.TicketStatus, error) {
-    query := `
+	query := `
         SELECT 
             status,
             COUNT(*) as count
         FROM tickets
         GROUP BY status
     `
-    
-    var result []domain.TicketStatus
-    err := r.db.SelectContext(ctx, &result, query)
-    if err != nil {
-        return nil, fmt.Errorf("failed to get ticket status: %w", err)
-    }
-    return result, nil
+
+	var result []domain.TicketStatus
+	err := r.db.SelectContext(ctx, &result, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get ticket status: %w", err)
+	}
+	return result, nil
 }
 
 func (r *adminRepo) GetAvgPriceBySector(ctx context.Context) ([]domain.AvgPriceBySector, error) {
-    query := `
+	query := `
         SELECT 
             ss.sector_number as sector,
             ss.sector_type,
@@ -96,17 +96,17 @@ func (r *adminRepo) GetAvgPriceBySector(ctx context.Context) ([]domain.AvgPriceB
         GROUP BY ss.sector_number, ss.sector_type
         ORDER BY avg_price DESC
     `
-    
-    var result []domain.AvgPriceBySector
-    err := r.db.SelectContext(ctx, &result, query)
-    if err != nil {
-        return nil, fmt.Errorf("failed to get avg price by sector: %w", err)
-    }
-    return result, nil
+
+	var result []domain.AvgPriceBySector
+	err := r.db.SelectContext(ctx, &result, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get avg price by sector: %w", err)
+	}
+	return result, nil
 }
 
 func (r *adminRepo) GetTopBuyers(ctx context.Context, limit int) ([]domain.TopBuyer, error) {
-    query := `
+	query := `
         SELECT 
             u.full_name,
             u.email,
@@ -119,17 +119,17 @@ func (r *adminRepo) GetTopBuyers(ctx context.Context, limit int) ([]domain.TopBu
         ORDER BY tickets_count DESC
         LIMIT $1
     `
-    
-    var result []domain.TopBuyer
-    err := r.db.SelectContext(ctx, &result, query, limit)
-    if err != nil {
-        return nil, fmt.Errorf("failed to get top buyers: %w", err)
-    }
-    return result, nil
+
+	var result []domain.TopBuyer
+	err := r.db.SelectContext(ctx, &result, query, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get top buyers: %w", err)
+	}
+	return result, nil
 }
 
 func (r *adminRepo) GetStatsSummary(ctx context.Context) (*domain.AdminStats, error) {
-    query := `
+	query := `
         SELECT 
             (SELECT COUNT(*) FROM users) as total_users,
             (SELECT COUNT(*) FROM tickets WHERE status != 'cancelled') as total_tickets,
@@ -137,15 +137,15 @@ func (r *adminRepo) GetStatsSummary(ctx context.Context) (*domain.AdminStats, er
             (SELECT COUNT(*) FROM tickets WHERE status = 'active') as active_tickets,
             (SELECT COUNT(*) FROM tickets WHERE status = 'used') as used_tickets
     `
-    
-    var result domain.AdminStats
-    err := r.db.GetContext(ctx, &result, query)
-    if err != nil {
-        return nil, fmt.Errorf("failed to get stats summary: %w", err)
-    }
-    
-    logrus.Infof("Stats summary: total_users=%d, total_tickets=%d, total_revenue=%f, active=%d, used=%d",
-        result.TotalUsers, result.TotalTickets, result.TotalRevenue, result.ActiveTickets, result.UsedTickets)
-    
-    return &result, nil
+
+	var result domain.AdminStats
+	err := r.db.GetContext(ctx, &result, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get stats summary: %w", err)
+	}
+
+	logrus.Infof("Stats summary: total_users=%d, total_tickets=%d, total_revenue=%f, active=%d, used=%d",
+		result.TotalUsers, result.TotalTickets, result.TotalRevenue, result.ActiveTickets, result.UsedTickets)
+
+	return &result, nil
 }

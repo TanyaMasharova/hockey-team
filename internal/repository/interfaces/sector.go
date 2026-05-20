@@ -7,6 +7,6 @@ import (
 )
 
 type SectorRepository interface {
-    GetAllSectors(ctx context.Context) ([]*domain.StadiumSector, error)
-    GetSectorByID(ctx context.Context, sectorID string) (*domain.StadiumSector, error)
+	GetAllSectors(ctx context.Context) ([]*domain.StadiumSector, error)
+	GetSectorByID(ctx context.Context, sectorID string) (*domain.StadiumSector, error)
 }

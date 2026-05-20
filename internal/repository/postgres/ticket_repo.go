@@ -18,9 +18,9 @@ func NewTicketRepository(db *sqlx.DB) *ticketRepo {
 
 // GetUserTickets возвращает все билеты пользователя с детальной информацией
 func (r *ticketRepo) GetUserTickets(ctx context.Context, userID string) ([]*domain.TicketWithDetails, error) {
-    var tickets []*domain.TicketWithDetails
-    
-    query := `
+	var tickets []*domain.TicketWithDetails
+
+	query := `
         SELECT 
             t.id as ticket_id,
             t.final_price,
@@ -42,18 +42,18 @@ func (r *ticketRepo) GetUserTickets(ctx context.Context, userID string) ([]*doma
         WHERE t.user_id = $1
         ORDER BY m.match_date DESC
     `
-    
-    err := r.db.SelectContext(ctx, &tickets, query, userID)
-    if err != nil {
-        return nil, fmt.Errorf("failed to get user tickets: %w", err)
-    }
-    
-    return tickets, nil
+
+	err := r.db.SelectContext(ctx, &tickets, query, userID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user tickets: %w", err)
+	}
+
+	return tickets, nil
 }
 
 // CreateTicket создает новый билет (только поля из БД)
 func (r *ticketRepo) CreateTicket(ctx context.Context, ticket *domain.Ticket) error {
-    query := `
+	query := `
         INSERT INTO tickets (
             id, user_id, match_id, seat_id, final_price, 
             purchase_date, qr_code_hash, status
@@ -62,47 +62,47 @@ func (r *ticketRepo) CreateTicket(ctx context.Context, ticket *domain.Ticket) er
         )
         RETURNING id
     `
-    
-    var id string
-    err := r.db.QueryRowContext(ctx, query,
-        ticket.UserID,
-        ticket.MatchID,
-        ticket.SeatID,
-        ticket.FinalPrice,
-        ticket.PurchaseDate,
-        ticket.QRCodeHash,
-        ticket.Status,
-    ).Scan(&id)
-    
-    if err != nil {
-        return fmt.Errorf("failed to create ticket: %w", err)
-    }
-    
-    ticket.ID = id
-    return nil
+
+	var id string
+	err := r.db.QueryRowContext(ctx, query,
+		ticket.UserID,
+		ticket.MatchID,
+		ticket.SeatID,
+		ticket.FinalPrice,
+		ticket.PurchaseDate,
+		ticket.QRCodeHash,
+		ticket.Status,
+	).Scan(&id)
+
+	if err != nil {
+		return fmt.Errorf("failed to create ticket: %w", err)
+	}
+
+	ticket.ID = id
+	return nil
 }
 
 // CheckSeatAvailability проверяет, свободно ли место на конкретный матч
 func (r *ticketRepo) CheckSeatAvailability(ctx context.Context, seatID string, matchID string) (bool, error) {
 	var count int
-	
+
 	query := `
 		SELECT COUNT(*)
 		FROM tickets t
 		WHERE t.seat_id = $1 AND t.match_id = $2 AND t.status != 'cancelled'
 	`
-	
+
 	err := r.db.GetContext(ctx, &count, query, seatID, matchID)
 	if err != nil {
 		return false, fmt.Errorf("failed to check seat availability: %w", err)
 	}
-	
+
 	return count == 0, nil
 }
 
 func (r *ticketRepo) GetTicketByID(ctx context.Context, ticketID string) (*domain.Ticket, error) {
 	var ticket domain.Ticket
-	
+
 	query := `
 		SELECT 
 			id, user_id, match_id, seat_id, final_price,
@@ -110,11 +110,11 @@ func (r *ticketRepo) GetTicketByID(ctx context.Context, ticketID string) (*domai
 		FROM tickets
 		WHERE id = $1
 	`
-	
+
 	err := r.db.GetContext(ctx, &ticket, query, ticketID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ticket by id: %w", err)
 	}
-	
+
 	return &ticket, nil
 }

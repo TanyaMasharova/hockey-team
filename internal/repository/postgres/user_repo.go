@@ -11,22 +11,22 @@ import (
 )
 
 type userRepo struct {
-    db *sqlx.DB
+	db *sqlx.DB
 }
 
 func NewUserRepository(db *sqlx.DB) *userRepo {
-    return &userRepo{db: db}
+	return &userRepo{db: db}
 }
 
 func (r *userRepo) FindByID(ctx context.Context, id string) (*domain.User, error) {
 	var user domain.User
-	
+
 	query := `
 		SELECT id, phone, email, password_hash, full_name, birth_date, created_at, updated_at
 		FROM users
 		WHERE id = $1
 	`
-	
+
 	err := r.db.GetContext(ctx, &user, query, id)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
@@ -34,7 +34,7 @@ func (r *userRepo) FindByID(ctx context.Context, id string) (*domain.User, error
 		}
 		return nil, fmt.Errorf("find user by id: %w", err)
 	}
-	
+
 	return &user, nil
 }
 
@@ -44,11 +44,11 @@ func (r *userRepo) Create(ctx context.Context, user *domain.User) error {
 		VALUES ($1, $2, $3, $4, $5)
 		RETURNING id, created_at, updated_at
 	`
-	
+
 	err := r.db.QueryRowContext(ctx, query,
 		user.Phone,
 		user.PasswordHash,
-		nullString(user.Email), 
+		nullString(user.Email),
 		user.FullName,
 		nullStringPtr(user.BirthDate),
 	).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
@@ -81,13 +81,13 @@ func (r *userRepo) Exists(ctx context.Context, phone string) (bool, error) {
 
 func (r *userRepo) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
 	var user domain.User
-	
+
 	query := `
 		SELECT id, phone, email, password_hash, full_name, birth_date, role, created_at, updated_at
 		FROM users
 		WHERE email = $1
 	`
-	
+
 	err := r.db.GetContext(ctx, &user, query, email)
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
@@ -95,7 +95,7 @@ func (r *userRepo) FindByEmail(ctx context.Context, email string) (*domain.User,
 		}
 		return nil, fmt.Errorf("find user by email: %w", err)
 	}
-	
+
 	return &user, nil
 }
 
@@ -107,7 +107,7 @@ func (r *userRepo) Update(ctx context.Context, user *domain.User) error {
 		WHERE id = $5
 		RETURNING updated_at
 	`
-	
+
 	err := r.db.QueryRowContext(ctx, query,
 		user.FullName,
 		user.Phone,
@@ -115,12 +115,12 @@ func (r *userRepo) Update(ctx context.Context, user *domain.User) error {
 		nullStringPtr(user.BirthDate),
 		user.ID,
 	).Scan(&user.UpdatedAt)
-	
+
 	if err != nil {
 		if err.Error() == "sql: no rows in result set" {
 			return interfaces.ErrUserNotFound
 		}
-		
+
 		if pgErr, ok := err.(*pq.Error); ok {
 			if pgErr.Code == "23505" {
 				if pgErr.Constraint == "users_phone_key" {
@@ -133,14 +133,14 @@ func (r *userRepo) Update(ctx context.Context, user *domain.User) error {
 		}
 		return fmt.Errorf("update user: %w", err)
 	}
-	
+
 	return nil
 }
 
 // НОВЫЙ МЕТОД: обновление конкретного поля
 func (r *userRepo) UpdateField(ctx context.Context, id string, field string, value interface{}) error {
 	var query string
-	
+
 	switch field {
 	case "full_name":
 		query = `UPDATE users SET full_name = $1, updated_at = NOW() WHERE id = $2`
@@ -153,7 +153,7 @@ func (r *userRepo) UpdateField(ctx context.Context, id string, field string, val
 	default:
 		return fmt.Errorf("unknown field: %s", field)
 	}
-	
+
 	result, err := r.db.ExecContext(ctx, query, value, id)
 	if err != nil {
 		if pgErr, ok := err.(*pq.Error); ok {
@@ -168,16 +168,16 @@ func (r *userRepo) UpdateField(ctx context.Context, id string, field string, val
 		}
 		return fmt.Errorf("update field %s: %w", field, err)
 	}
-	
+
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return fmt.Errorf("get rows affected: %w", err)
 	}
-	
+
 	if rowsAffected == 0 {
 		return interfaces.ErrUserNotFound
 	}
-	
+
 	return nil
 }
 

@@ -9,17 +9,17 @@ import (
 )
 
 type sectorRepo struct {
-    db *sqlx.DB
+	db *sqlx.DB
 }
 
 func NewSectorRepository(db *sqlx.DB) *sectorRepo {
-    return &sectorRepo{db: db}
+	return &sectorRepo{db: db}
 }
 
 func (r *sectorRepo) GetAllSectors(ctx context.Context) ([]*domain.StadiumSector, error) {
-    var sectors []*domain.StadiumSector
-    
-    query := `
+	var sectors []*domain.StadiumSector
+
+	query := `
         SELECT 
             id,
             sector_number,
@@ -30,19 +30,19 @@ func (r *sectorRepo) GetAllSectors(ctx context.Context) ([]*domain.StadiumSector
         FROM stadium_sectors
         ORDER BY sector_number
     `
-    
-    err := r.db.SelectContext(ctx, &sectors, query)
-    if err != nil {
-        return nil, fmt.Errorf("failed to get all sectors: %w", err)
-    }
-    
-    return sectors, nil
+
+	err := r.db.SelectContext(ctx, &sectors, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get all sectors: %w", err)
+	}
+
+	return sectors, nil
 }
 
 func (r *sectorRepo) GetSectorByID(ctx context.Context, sectorID string) (*domain.StadiumSector, error) {
-    var sector domain.StadiumSector
-    
-    query := `
+	var sector domain.StadiumSector
+
+	query := `
         SELECT 
             id,
             sector_number,
@@ -53,11 +53,11 @@ func (r *sectorRepo) GetSectorByID(ctx context.Context, sectorID string) (*domai
         FROM stadium_sectors
         WHERE id = $1
     `
-    
-    err := r.db.GetContext(ctx, &sector, query, sectorID)
-    if err != nil {
-        return nil, fmt.Errorf("failed to get sector by id: %w", err)
-    }
-    
-    return &sector, nil
+
+	err := r.db.GetContext(ctx, &sector, query, sectorID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get sector by id: %w", err)
+	}
+
+	return &sector, nil
 }

@@ -34,12 +34,12 @@ func (s *Service) GetUserTickets(ctx context.Context, userID string) ([]*domain.
 	if userID == "" {
 		return nil, fmt.Errorf("user ID is required")
 	}
-	
+
 	tickets, err := s.ticketRepo.GetUserTickets(ctx, userID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user tickets: %w", err)
 	}
-	
+
 	return tickets, nil
 }
 
@@ -54,20 +54,20 @@ func (s *Service) CreateTicket(ctx context.Context, req *CreateTicketRequest) (*
 	if req.SeatID == "" {
 		return nil, fmt.Errorf("seat ID is required")
 	}
-	
+
 	// Проверяем доступность места
 	available, err := s.ticketRepo.CheckSeatAvailability(ctx, req.SeatID, req.MatchID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check seat availability: %w", err)
 	}
-	
+
 	if !available {
 		return nil, fmt.Errorf("seat is already taken")
 	}
-	
+
 	// Генерируем хэш для QR кода
 	qrHash := generateQRHash(req.UserID, req.MatchID, req.SeatID)
-	
+
 	ticket := &domain.Ticket{
 		ID:           generateID(),
 		UserID:       req.UserID,
@@ -78,12 +78,12 @@ func (s *Service) CreateTicket(ctx context.Context, req *CreateTicketRequest) (*
 		QRCodeHash:   qrHash,
 		Status:       "active",
 	}
-	
+
 	err = s.ticketRepo.CreateTicket(ctx, ticket)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create ticket: %w", err)
 	}
-	
+
 	return ticket, nil
 }
 

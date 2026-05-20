@@ -14,5 +14,5 @@ type MatchRepository interface {
 	GetMatchesBySeason(ctx context.Context, season string) ([]dto.MatchResponse, error)
 	GetMatchesStats(ctx context.Context) (*dto.MatchStatsResponse, error)
 
-	 GetMatchWithOpponent(ctx context.Context, matchID string) (*domain.MatchWithOpponent, error)
+	GetMatchWithOpponent(ctx context.Context, matchID string) (*domain.MatchWithOpponent, error)
 }
