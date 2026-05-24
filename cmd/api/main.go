@@ -34,7 +34,7 @@ func main() {
 		ForceColors:   true,
 	})
 
-	logger.Info("Запуск приложения")
+	logger.Info("Запуск приложения v0.3.0")
 
 	// 2. Загружаем .env
 	logger.Info("Загрузка .env файла")
